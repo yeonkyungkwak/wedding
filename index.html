@@ -251,8 +251,9 @@
   }
   .map-embed{
     margin-top:28px;border:1px solid var(--line);border-radius:4px;
-    overflow:hidden;background:#fff;
+    overflow:hidden;background:#fff;position:relative;
   }
+  .map-link{position:absolute;inset:0;z-index:5;display:block}
   .map-embed iframe{display:block;width:100%;height:230px;border:0}
   #nmap{width:100%;height:230px}
   .transit{margin-top:36px;display:flex;flex-direction:column;gap:22px}
@@ -459,9 +460,9 @@
     <button class="copy-addr" id="copy-addr">주소 복사하기</button>
     <div class="map-embed">
       <div id="nmap" role="img" aria-label="더베뉴지서울 약도"></div>
+      <a class="map-link" href="https://map.naver.com/p/search/%EB%8D%94%EB%B2%A0%EB%89%B4%EC%A7%80%EC%84%9C%EC%9A%B8" target="_blank" rel="noopener" aria-label="네이버 지도에서 더베뉴지서울 보기"></a>
     </div>
     <div class="map-btns">
-      <a href="https://map.naver.com/p/search/%EB%8D%94%EB%B2%A0%EB%89%B4%EC%A7%80%EC%84%9C%EC%9A%B8" target="_blank" rel="noopener">네이버 지도</a>
       <a href="https://map.kakao.com/link/search/%EB%8D%94%EB%B2%A0%EB%89%B4%EC%A7%80%EC%84%9C%EC%9A%B8" target="_blank" rel="noopener">카카오맵</a>
     </div>
     <div class="transit">
@@ -503,7 +504,13 @@
             <div class="bank">신한은행 · 이승민</div>
             <div class="num">110-402-641343</div>
           </div>
-          <button class="copy-btn" data-copy="신한은행 110-402-641343">복사</button>
+          <div class="acc-actions">
+            <button class="copy-btn" data-copy="신한은행 110-402-641343">복사</button>
+            <a class="kakao-btn" href="https://qr.kakaopay.com/Ej8l5KfP5" target="_blank" rel="noopener" aria-label="카카오페이로 신랑에게 송금하기">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.87 5.31 4.69 6.72-.15.56-.7 2.62-.8 3.03-.13.5.18.5.39.36.16-.1 2.62-1.78 3.68-2.51.66.1 1.34.15 2.04.15 5.52 0 10-3.58 10-7.75S17.52 3 12 3z"/></svg>
+              송금
+            </a>
+          </div>
         </div>
       </div>
     </details>
