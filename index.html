@@ -235,6 +235,15 @@
     font-size:14.5px;line-height:2.05;color:#4A4840;
     margin-bottom:28px;
   }
+  .name-input{
+    display:block;width:100%;
+    border:1px solid var(--line);border-radius:4px;
+    padding:11px 14px;font-size:14px;font-family:var(--sans);
+    color:var(--ink);background:#fff;text-align:center;
+    margin-bottom:10px;
+  }
+  .name-input::placeholder{color:var(--sub)}
+  .name-input:focus{outline:2px solid var(--accent);outline-offset:-1px}
   .upload-btn{
     display:flex;align-items:center;justify-content:center;gap:8px;
     border:1px solid var(--accent);color:var(--accent);
@@ -565,14 +574,15 @@
     </details>
   </section>
 
-  <!-- GUEST PHOTOS -->
-  <section class="reveal">
+  <!-- GUEST PHOTOS (숨김 상태 — 다시 켜려면 아래 style="display:none"만 지우면 됩니다) -->
+  <section class="reveal" id="guest-section" style="display:none">
     <div class="eyebrow">Moments</div>
     <h2 class="sec-title">결혼식 사진 공유</h2>
     <p class="share-note">
       결혼식 날 하객분들의 시선으로 담아주신<br>
       소중한 순간들을 이곳에 올려 함께 나눠 주세요.
     </p>
+    <input type="text" class="name-input" id="uploader-name" maxlength="12" placeholder="올리는 분 성함 (선택)" autocomplete="off">
     <label class="upload-btn" for="photo-input">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
       사진 올리기
@@ -652,7 +662,7 @@
     var p=lbList[cur];
     lbImg.src=p.src;
     lbImg.alt=p.alt;
-    lbCnt.textContent=(cur+1)+' / '+lbList.length;
+    lbCnt.textContent=(cur+1)+' / '+lbList.length+(p.name?' · '+p.name+'님':'');
     if(p.orig&&isCouple){lbOrig.href=p.orig;lbOrig.classList.add('show');}
     else{lbOrig.classList.remove('show');}
   }
@@ -775,22 +785,31 @@
   }
   function loadGuest(){
     if(!sbClient){gempty.innerHTML='사진 목록을 불러오지 못했어요.<br>잠시 후 다시 열어주세요.';return;}
-    sbClient.storage.from(BUCKET).list('prev',{limit:1000,sortBy:{column:'name',order:'desc'}})
-      .then(function(res){
-        if(res.error||!res.data){return;}
-        guestPhotos=res.data.filter(function(f){return f.name&&f.name.indexOf('.')>0;}).map(function(f){
-          var base=f.name.replace(/\.jpg$/,'');
-          var us=base.lastIndexOf('_');
-          var id=us>0?base.slice(0,us):base;
-          var ext=us>0?base.slice(us+1):'jpg';
-          return{
-            src:publicUrl('prev/'+f.name),
-            orig:publicUrl('orig/'+id+'.'+ext,true),
-            alt:'하객이 공유한 결혼식 사진'
-          };
-        });
-        renderGuest();
+    Promise.all([
+      sbClient.storage.from(BUCKET).list('prev',{limit:1000,sortBy:{column:'name',order:'desc'}}),
+      sbClient.from('guest_uploads').select('id,name').then(function(r){return r;},function(){return{data:null};})
+    ]).then(function(rs){
+      var res=rs[0];
+      if(res.error||!res.data){return;}
+      var nameMap={};
+      if(rs[1]&&rs[1].data){
+        rs[1].data.forEach(function(row){if(row&&row.name)nameMap[row.id]=row.name;});
+      }
+      guestPhotos=res.data.filter(function(f){return f.name&&f.name.indexOf('.')>0;}).map(function(f){
+        var base=f.name.replace(/\.jpg$/,'');
+        var us=base.lastIndexOf('_');
+        var id=us>0?base.slice(0,us):base;
+        var ext=us>0?base.slice(us+1):'jpg';
+        var nm=nameMap[id]||'';
+        return{
+          src:publicUrl('prev/'+f.name),
+          orig:publicUrl('orig/'+id+'.'+ext,true),
+          name:nm,
+          alt:nm?(nm+'님이 공유한 결혼식 사진'):'하객이 공유한 결혼식 사진'
+        };
       });
+      renderGuest();
+    });
   }
   function makePreview(file){
     return new Promise(function(resolve){
@@ -835,6 +854,12 @@
       if(f.size>45*1024*1024){fail++;next();return;}
       var ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
       var id=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+      var uname='';
+      try{
+        var nEl=document.getElementById('uploader-name');
+        uname=(nEl&&nEl.value?nEl.value:'').trim().slice(0,12);
+        if(uname)localStorage.setItem('wd_name',uname);
+      }catch(e){}
       sbClient.storage.from(BUCKET).upload('orig/'+id+'.'+ext,f,{contentType:f.type||'image/jpeg',upsert:false})
         .then(function(r1){
           if(r1.error)throw r1.error;
@@ -845,6 +870,9 @@
         })
         .then(function(r2){
           if(r2.error)throw r2.error;
+          if(uname){
+            sbClient.from('guest_uploads').insert({id:id,name:uname}).then(function(){},function(){});
+          }
           done++;next();
         })
         .catch(function(){fail++;next();});
@@ -854,7 +882,12 @@
   if(ginput){
     ginput.addEventListener('change',function(){uploadAll(ginput.files);});
   }
-  loadGuest();
+  try{
+    var savedName=localStorage.getItem('wd_name');
+    if(savedName)document.getElementById('uploader-name').value=savedName;
+  }catch(e){}
+  var guestSection=document.getElementById('guest-section');
+  if(guestSection&&guestSection.style.display!=='none'){loadGuest();}
 
   /* ---------- map (naver, google fallback) ---------- */
   function fallbackMap(){
