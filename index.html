@@ -482,24 +482,6 @@
     <div class="grid" id="grid"></div>
   </section>
 
-  <!-- GUEST PHOTOS -->
-  <section class="reveal">
-    <div class="eyebrow">Moments</div>
-    <h2 class="sec-title">결혼식 사진 공유</h2>
-    <p class="share-note">
-      결혼식 날 하객분들의 시선으로 담아주신<br>
-      소중한 순간들을 이곳에 올려 함께 나눠 주세요.
-    </p>
-    <label class="upload-btn" for="photo-input">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      사진 올리기
-    </label>
-    <input type="file" id="photo-input" accept="image/*" multiple style="display:none">
-    <div class="upload-status" id="upload-status" aria-live="polite"></div>
-    <div class="grid guest-grid" id="ggrid"></div>
-    <div class="guest-empty" id="guest-empty">아직 공유된 사진이 없어요.<br>결혼식 날 첫 번째 추억을 올려주세요!</div>
-  </section>
-
   <!-- LOCATION -->
   <section class="reveal" style="background:var(--surface)">
     <div class="eyebrow">Location</div>
@@ -583,6 +565,24 @@
     </details>
   </section>
 
+  <!-- GUEST PHOTOS -->
+  <section class="reveal">
+    <div class="eyebrow">Moments</div>
+    <h2 class="sec-title">결혼식 사진 공유</h2>
+    <p class="share-note">
+      결혼식 날 하객분들의 시선으로 담아주신<br>
+      소중한 순간들을 이곳에 올려 함께 나눠 주세요.
+    </p>
+    <label class="upload-btn" for="photo-input">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      사진 올리기
+    </label>
+    <input type="file" id="photo-input" accept="image/*" multiple style="display:none">
+    <div class="upload-status" id="upload-status" aria-live="polite"></div>
+    <div class="grid guest-grid" id="ggrid"></div>
+    <div class="guest-empty" id="guest-empty">아직 공유된 사진이 없어요.<br>결혼식 날 첫 번째 추억을 올려주세요!</div>
+  </section>
+
   <!-- FOOTER -->
   <footer class="reveal">
     <p class="thanks">
@@ -633,6 +633,13 @@
     grid.appendChild(b);
   });
 
+  /* 원본 저장 버튼: 신랑·신부 전용 (비밀 주소로 접속 시에만 표시) */
+  var isCouple=false;
+  try{
+    if(location.hash==='#smyk1128'){localStorage.setItem('wd_couple','1');}
+    isCouple=localStorage.getItem('wd_couple')==='1';
+  }catch(e){isCouple=(location.hash==='#smyk1128');}
+
   var lb=document.getElementById('lightbox'),
       lbImg=document.getElementById('lb-img'),
       lbCnt=document.getElementById('lb-counter'),
@@ -646,7 +653,7 @@
     lbImg.src=p.src;
     lbImg.alt=p.alt;
     lbCnt.textContent=(cur+1)+' / '+lbList.length;
-    if(p.orig){lbOrig.href=p.orig;lbOrig.classList.add('show');}
+    if(p.orig&&isCouple){lbOrig.href=p.orig;lbOrig.classList.add('show');}
     else{lbOrig.classList.remove('show');}
   }
   function move(d){cur=(cur+d+lbList.length)%lbList.length;render();}
