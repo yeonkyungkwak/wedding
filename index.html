@@ -254,6 +254,7 @@
     overflow:hidden;background:#fff;
   }
   .map-embed iframe{display:block;width:100%;height:230px;border:0}
+  #nmap{width:100%;height:230px}
   .transit{margin-top:36px;display:flex;flex-direction:column;gap:22px}
   .transit .item h4{
     font-size:13px;font-weight:600;letter-spacing:.1em;
@@ -457,7 +458,7 @@
     <div class="loc-addr">서울 강서구 강서로 388</div>
     <button class="copy-addr" id="copy-addr">주소 복사하기</button>
     <div class="map-embed">
-      <iframe src="https://maps.google.com/maps?q=%EB%8D%94%EB%B2%A0%EB%89%B4%EC%A7%80%EC%84%9C%EC%9A%B8&z=16&output=embed" title="더베뉴지서울 약도" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+      <div id="nmap" role="img" aria-label="더베뉴지서울 약도"></div>
     </div>
     <div class="map-btns">
       <a href="https://map.naver.com/p/search/%EB%8D%94%EB%B2%A0%EB%89%B4%EC%A7%80%EC%84%9C%EC%9A%B8" target="_blank" rel="noopener">네이버 지도</a>
@@ -547,6 +548,11 @@
 
 <div id="toast"></div>
 
+<script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=9u538ka9zs"></script>
+<script>
+  /* 네이버 지도 인증 실패 시 구글 지도로 대체 */
+  window.navermap_authFailure=function(){window.__nmapFail=true;};
+</script>
 <script>
 (function(){
   /* ---------- gallery ---------- */
@@ -661,6 +667,36 @@
   document.getElementById('copy-addr').addEventListener('click',function(){
     copyText('서울 강서구 강서로 388','주소가 복사되었습니다');
   });
+
+  /* ---------- map (naver, google fallback) ---------- */
+  function fallbackMap(){
+    var wrap=document.querySelector('.map-embed');
+    if(!wrap||wrap.getAttribute('data-fb'))return;
+    wrap.setAttribute('data-fb','1');
+    wrap.innerHTML='<iframe src="https://maps.google.com/maps?q=%EB%8D%94%EB%B2%A0%EB%89%B4%EC%A7%80%EC%84%9C%EC%9A%B8&z=16&output=embed" title="더베뉴지서울 약도" loading="lazy" style="display:block;width:100%;height:230px;border:0"></iframe>';
+  }
+  function initMap(){
+    if(window.__nmapFail||!(window.naver&&naver.maps)){fallbackMap();return;}
+    try{
+      var pos=new naver.maps.LatLng(37.560152,126.839323);
+      var map=new naver.maps.Map('nmap',{
+        center:pos,zoom:16,
+        scrollWheel:false,
+        mapDataControl:false
+      });
+      var marker=new naver.maps.Marker({position:pos,map:map,title:'더베뉴지서울'});
+      var iw=new naver.maps.InfoWindow({
+        content:'<div style="padding:7px 14px;font-size:12.5px;font-family:\'Noto Sans KR\',sans-serif;color:#2B2A26;">더베뉴지서울</div>',
+        borderColor:'#E8E4DA',borderWidth:1
+      });
+      iw.open(map,marker);
+      marker.addListener('click',function(){
+        if(iw.getMap()){iw.close();}else{iw.open(map,marker);}
+      });
+    }catch(e){fallbackMap();}
+  }
+  initMap();
+  setTimeout(function(){if(window.__nmapFail)fallbackMap();},2500);
 
   /* ---------- reveal ---------- */
   if('IntersectionObserver' in window){
