@@ -229,6 +229,37 @@
   }
   .lb-prev{left:2px}.lb-next{right:2px}
 
+  /* ---------- guest photos ---------- */
+  .share-note{
+    font-family:var(--serif);text-align:center;
+    font-size:14.5px;line-height:2.05;color:#4A4840;
+    margin-bottom:28px;
+  }
+  .upload-btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    border:1px solid var(--accent);color:var(--accent);
+    background:transparent;border-radius:4px;
+    padding:13px 0;font-size:14px;cursor:pointer;
+    margin-bottom:8px;
+  }
+  .upload-btn svg{width:17px;height:17px;stroke:var(--accent)}
+  .upload-btn.busy{opacity:.5;pointer-events:none}
+  .upload-status{
+    text-align:center;font-size:12.5px;color:var(--sub);
+    min-height:20px;margin-bottom:14px;
+  }
+  .guest-grid:empty{display:none}
+  .guest-empty{
+    text-align:center;font-size:13px;color:var(--sub);line-height:1.9;
+    padding:26px 0;border:1px dashed var(--line);border-radius:4px;
+  }
+  .lb-orig{
+    color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.4);
+    border-radius:999px;padding:8px 20px;font-size:12.5px;
+    text-decoration:none;margin-top:16px;display:none;
+  }
+  .lb-orig.show{display:inline-block}
+
   /* ---------- location ---------- */
   .loc-name{
     font-family:var(--serif);font-weight:700;font-size:18px;
@@ -451,6 +482,24 @@
     <div class="grid" id="grid"></div>
   </section>
 
+  <!-- GUEST PHOTOS -->
+  <section class="reveal">
+    <div class="eyebrow">Moments</div>
+    <h2 class="sec-title">결혼식 사진 공유</h2>
+    <p class="share-note">
+      결혼식 날 하객분들의 시선으로 담아주신<br>
+      소중한 순간들을 이곳에 올려 함께 나눠 주세요.
+    </p>
+    <label class="upload-btn" for="photo-input">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      사진 올리기
+    </label>
+    <input type="file" id="photo-input" accept="image/*" multiple style="display:none">
+    <div class="upload-status" id="upload-status" aria-live="polite"></div>
+    <div class="grid guest-grid" id="ggrid"></div>
+    <div class="guest-empty" id="guest-empty">아직 공유된 사진이 없어요.<br>결혼식 날 첫 번째 추억을 올려주세요!</div>
+  </section>
+
   <!-- LOCATION -->
   <section class="reveal" style="background:var(--surface)">
     <div class="eyebrow">Location</div>
@@ -551,11 +600,13 @@
   <img id="lb-img" src="" alt="웨딩 사진">
   <button class="lb-nav lb-next" id="lb-next" aria-label="다음 사진">&#8250;</button>
   <div class="lb-counter" id="lb-counter"></div>
+  <a class="lb-orig" id="lb-orig" href="#" target="_blank" rel="noopener">원본 저장</a>
 </div>
 
 <div id="toast"></div>
 
 <script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=9u538ka9zs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
 <script>
   /* 네이버 지도 인증 실패 시 구글 지도로 대체 */
   window.navermap_authFailure=function(){window.__nmapFail=true;};
@@ -585,15 +636,20 @@
   var lb=document.getElementById('lightbox'),
       lbImg=document.getElementById('lb-img'),
       lbCnt=document.getElementById('lb-counter'),
+      lbOrig=document.getElementById('lb-orig'),
+      lbList=photos,
       cur=0;
-  function openLb(i){cur=i;render();lb.classList.add('open');document.body.style.overflow='hidden';}
+  function openLb(i,list){lbList=list||photos;cur=i;render();lb.classList.add('open');document.body.style.overflow='hidden';}
   function closeLb(){lb.classList.remove('open');document.body.style.overflow='';}
   function render(){
-    lbImg.src=photos[cur].src;
-    lbImg.alt=photos[cur].alt;
-    lbCnt.textContent=(cur+1)+' / '+photos.length;
+    var p=lbList[cur];
+    lbImg.src=p.src;
+    lbImg.alt=p.alt;
+    lbCnt.textContent=(cur+1)+' / '+lbList.length;
+    if(p.orig){lbOrig.href=p.orig;lbOrig.classList.add('show');}
+    else{lbOrig.classList.remove('show');}
   }
-  function move(d){cur=(cur+d+photos.length)%photos.length;render();}
+  function move(d){cur=(cur+d+lbList.length)%lbList.length;render();}
   document.getElementById('lb-close').addEventListener('click',closeLb);
   document.getElementById('lb-prev').addEventListener('click',function(){move(-1);});
   document.getElementById('lb-next').addEventListener('click',function(){move(1);});
@@ -674,6 +730,124 @@
   document.getElementById('copy-addr').addEventListener('click',function(){
     copyText('서울 강서구 강서로 388','주소가 복사되었습니다');
   });
+
+  /* ---------- guest photo sharing (supabase) ---------- */
+  var SB_URL='https://uszqipzayenhjwqoejol.supabase.co';
+  var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzenFpcHpheWVuaGp3cW9lam9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NjA0NzYsImV4cCI6MjEwMzQzNjQ3Nn0._DnsmUiZCVU_GZ29Ei4HHbwX2mYgSndBZkW02pHH5TE';
+  var BUCKET='guest-photos';
+  var sbClient=null;
+  try{
+    if(window.supabase&&window.supabase.createClient){
+      sbClient=window.supabase.createClient(SB_URL,SB_KEY);
+    }
+  }catch(e){}
+
+  var ggrid=document.getElementById('ggrid'),
+      gempty=document.getElementById('guest-empty'),
+      gstatus=document.getElementById('upload-status'),
+      ginput=document.getElementById('photo-input'),
+      gbtn=document.querySelector('.upload-btn'),
+      guestPhotos=[];
+
+  function publicUrl(path,dl){
+    var r=sbClient.storage.from(BUCKET).getPublicUrl(path,dl?{download:true}:undefined);
+    return r&&r.data?r.data.publicUrl:'';
+  }
+  function renderGuest(){
+    ggrid.innerHTML='';
+    guestPhotos.forEach(function(p,i){
+      var b=document.createElement('button');
+      b.setAttribute('aria-label','하객 사진 '+(i+1)+' 크게 보기');
+      var im=document.createElement('img');
+      im.src=p.src;im.alt=p.alt;im.loading='lazy';
+      b.appendChild(im);
+      b.addEventListener('click',function(){openLb(i,guestPhotos);});
+      ggrid.appendChild(b);
+    });
+    gempty.style.display=guestPhotos.length?'none':'';
+  }
+  function loadGuest(){
+    if(!sbClient){gempty.innerHTML='사진 목록을 불러오지 못했어요.<br>잠시 후 다시 열어주세요.';return;}
+    sbClient.storage.from(BUCKET).list('prev',{limit:1000,sortBy:{column:'name',order:'desc'}})
+      .then(function(res){
+        if(res.error||!res.data){return;}
+        guestPhotos=res.data.filter(function(f){return f.name&&f.name.indexOf('.')>0;}).map(function(f){
+          var base=f.name.replace(/\.jpg$/,'');
+          var us=base.lastIndexOf('_');
+          var id=us>0?base.slice(0,us):base;
+          var ext=us>0?base.slice(us+1):'jpg';
+          return{
+            src:publicUrl('prev/'+f.name),
+            orig:publicUrl('orig/'+id+'.'+ext,true),
+            alt:'하객이 공유한 결혼식 사진'
+          };
+        });
+        renderGuest();
+      });
+  }
+  function makePreview(file){
+    return new Promise(function(resolve){
+      try{
+        var url=URL.createObjectURL(file);
+        var img=new Image();
+        img.onload=function(){
+          try{
+            var MAX=1000,w=img.naturalWidth,h=img.naturalHeight;
+            if(w<1||h<1){resolve(file);return;}
+            var sc=Math.min(1,MAX/Math.max(w,h));
+            var c=document.createElement('canvas');
+            c.width=Math.round(w*sc);c.height=Math.round(h*sc);
+            c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+            URL.revokeObjectURL(url);
+            c.toBlob(function(b){resolve(b||file);},'image/jpeg',0.8);
+          }catch(e){resolve(file);}
+        };
+        img.onerror=function(){URL.revokeObjectURL(url);resolve(file);};
+        img.src=url;
+      }catch(e){resolve(file);}
+    });
+  }
+  function uploadAll(files){
+    if(!sbClient){showToast('업로드 기능을 사용할 수 없어요. 잠시 후 다시 시도해 주세요.');return;}
+    var list=Array.prototype.slice.call(files).filter(function(f){return /^image\//.test(f.type)||/\.(heic|heif)$/i.test(f.name);});
+    if(!list.length)return;
+    if(list.length>30){showToast('한 번에 30장까지 올릴 수 있어요');list=list.slice(0,30);}
+    var done=0,fail=0;
+    gbtn.classList.add('busy');
+    function next(){
+      if(done+fail>=list.length){
+        gbtn.classList.remove('busy');
+        gstatus.textContent='';
+        showToast(fail?('일부 사진 업로드에 실패했어요 ('+(done)+'장 성공)'):'사진이 공유되었습니다. 감사합니다 ♥');
+        ginput.value='';
+        loadGuest();
+        return;
+      }
+      var f=list[done+fail];
+      gstatus.textContent='업로드 중… ('+(done+fail+1)+' / '+list.length+')';
+      if(f.size>45*1024*1024){fail++;next();return;}
+      var ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+      var id=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+      sbClient.storage.from(BUCKET).upload('orig/'+id+'.'+ext,f,{contentType:f.type||'image/jpeg',upsert:false})
+        .then(function(r1){
+          if(r1.error)throw r1.error;
+          return makePreview(f);
+        })
+        .then(function(blob){
+          return sbClient.storage.from(BUCKET).upload('prev/'+id+'_'+ext+'.jpg',blob,{contentType:'image/jpeg',upsert:false});
+        })
+        .then(function(r2){
+          if(r2.error)throw r2.error;
+          done++;next();
+        })
+        .catch(function(){fail++;next();});
+    }
+    next();
+  }
+  if(ginput){
+    ginput.addEventListener('change',function(){uploadAll(ginput.files);});
+  }
+  loadGuest();
 
   /* ---------- map (naver, google fallback) ---------- */
   function fallbackMap(){
