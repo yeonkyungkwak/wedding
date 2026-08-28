@@ -607,6 +607,15 @@
   document.querySelectorAll('.copy-btn').forEach(function(b){
     b.addEventListener('click',function(){copyText(b.getAttribute('data-copy'),'계좌번호가 복사되었습니다');});
   });
+  var isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  document.querySelectorAll('.kakao-btn').forEach(function(a){
+    a.addEventListener('click',function(e){
+      if(!isMobile){
+        e.preventDefault();
+        showToast('카카오페이 송금은 휴대폰에서 이용할 수 있어요');
+      }
+    });
+  });
   document.getElementById('copy-addr').addEventListener('click',function(){
     copyText('서울 강서구 강서로 388','주소가 복사되었습니다');
   });
