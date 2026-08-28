@@ -292,6 +292,15 @@
     font-size:12.5px;color:var(--ink);cursor:pointer;
     font-family:var(--sans);
   }
+  .acc-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+  .kakao-btn{
+    display:inline-flex;align-items:center;gap:5px;
+    background:#FEE500;border:1px solid #FEE500;
+    border-radius:999px;padding:7px 12px;
+    font-size:12.5px;color:#191919;text-decoration:none;
+    font-family:var(--sans);white-space:nowrap;
+  }
+  .kakao-btn svg{width:14px;height:14px;fill:#191919}
 
   /* ---------- footer ---------- */
   footer{
@@ -463,7 +472,13 @@
             <div class="bank">신한은행 · 곽연경</div>
             <div class="num">110-230-641200</div>
           </div>
-          <button class="copy-btn" data-copy="신한은행 110-230-641200">복사</button>
+          <div class="acc-actions">
+            <button class="copy-btn" data-copy="신한은행 110-230-641200">복사</button>
+            <a class="kakao-btn" href="https://qr.kakaopay.com/Ej75nYB0m" target="_blank" rel="noopener" aria-label="카카오페이로 신부에게 송금하기">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.87 5.31 4.69 6.72-.15.56-.7 2.62-.8 3.03-.13.5.18.5.39.36.16-.1 2.62-1.78 3.68-2.51.66.1 1.34.15 2.04.15 5.52 0 10-3.58 10-7.75S17.52 3 12 3z"/></svg>
+              송금
+            </a>
+          </div>
         </div>
       </div>
     </details>
