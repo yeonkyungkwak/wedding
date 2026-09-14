@@ -776,7 +776,11 @@
     galBtns.forEach(function(b,j){
       if(j===galIdx){b.classList.add('active');}else{b.classList.remove('active');}
     });
-    try{galBtns[galIdx].scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});}catch(e){}
+    try{
+      var b=galBtns[galIdx];
+      var target=b.offsetLeft-(galThumbs.clientWidth-b.offsetWidth)/2;
+      galThumbs.scrollTo({left:Math.max(0,target),behavior:'smooth'});
+    }catch(e){}
   }
   document.getElementById('gal-prev').addEventListener('click',function(){setGal(galIdx-1);});
   document.getElementById('gal-next').addEventListener('click',function(){setGal(galIdx+1);});
