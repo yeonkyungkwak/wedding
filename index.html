@@ -197,6 +197,34 @@
   .grid img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s ease}
   .grid button:active img{transform:scale(1.04)}
 
+  .gal-main{
+    position:relative;border-radius:2px;overflow:hidden;
+    aspect-ratio:3/4;background:var(--surface);
+  }
+  .gal-main img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer}
+  .gal-nav{
+    position:absolute;top:50%;transform:translateY(-50%);
+    background:rgba(43,42,38,.3);border:0;color:#fff;
+    width:34px;height:34px;border-radius:50%;
+    font-size:20px;line-height:1;cursor:pointer;font-family:var(--eng);
+  }
+  .gal-prev{left:10px}.gal-next{right:10px}
+  .gal-thumbs{
+    display:flex;gap:8px;margin-top:10px;
+    overflow-x:auto;padding-bottom:4px;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .gal-thumbs::-webkit-scrollbar{display:none}
+  .gal-thumbs button{
+    flex:0 0 auto;width:62px;height:78px;
+    border:2px solid transparent;border-radius:2px;overflow:hidden;
+    padding:0;background:none;cursor:pointer;
+    opacity:.5;transition:opacity .3s,border-color .3s;
+  }
+  .gal-thumbs button.active{border-color:var(--accent);opacity:1}
+  .gal-thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+
   .lightbox{
     position:fixed;inset:0;z-index:60;display:none;
     background:rgba(24,23,20,.94);
@@ -379,6 +407,22 @@
   }
   .kakao-btn svg{width:14px;height:14px;fill:#191919}
 
+  /* ---------- share ---------- */
+  .share-btns{display:flex;flex-direction:column;gap:10px}
+  .btn-kakao{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    background:#FEE500;border:1px solid #FEE500;border-radius:4px;
+    padding:14px 0;font-size:14.5px;color:#191919;cursor:pointer;
+    font-family:var(--sans);width:100%;
+  }
+  .btn-kakao svg{width:18px;height:18px}
+  .btn-copylink{
+    display:block;width:100%;
+    background:#fff;border:1px solid var(--line);border-radius:4px;
+    padding:14px 0;font-size:14.5px;color:var(--ink);cursor:pointer;
+    font-family:var(--sans);text-align:center;
+  }
+
   /* ---------- footer ---------- */
   footer{
     text-align:center;padding:64px 28px 72px;
@@ -499,7 +543,12 @@
   <section class="reveal">
     <div class="eyebrow">Gallery</div>
     <h2 class="sec-title">우리의 순간들</h2>
-    <div class="grid" id="grid"></div>
+    <div class="gal-main" id="gal-main">
+      <img id="gal-main-img" src="" alt="">
+      <button class="gal-nav gal-prev" id="gal-prev" aria-label="이전 사진">&#8249;</button>
+      <button class="gal-nav gal-next" id="gal-next" aria-label="다음 사진">&#8250;</button>
+    </div>
+    <div class="gal-thumbs" id="gal-thumbs"></div>
   </section>
 
   <!-- LOCATION -->
@@ -652,6 +701,19 @@
     <div class="guest-empty" id="guest-empty">아직 공유된 사진이 없어요.<br>결혼식 날 첫 번째 추억을 올려주세요!</div>
   </section>
 
+  <!-- SHARE -->
+  <section class="share-sec" style="background:var(--surface)">
+    <div class="eyebrow">Share</div>
+    <h2 class="sec-title">청첩장 전하기</h2>
+    <div class="share-btns">
+      <button class="btn-kakao" id="btn-kakao">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.87 5.31 4.69 6.72-.15.56-.7 2.62-.8 3.03-.13.5.18.5.39.36.16-.1 2.62-1.78 3.68-2.51.66.1 1.34.15 2.04.15 5.52 0 10-3.58 10-7.75S17.52 3 12 3z" fill="#191919"/></svg>
+        카카오톡으로 공유하기
+      </button>
+      <button class="btn-copylink" id="btn-copylink">링크 주소 복사하기</button>
+    </div>
+  </section>
+
   <!-- FOOTER -->
   <footer class="reveal">
     <p class="thanks">
@@ -676,6 +738,7 @@
 
 <script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=9u538ka9zs"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js"></script>
 <script>
   /* 네이버 지도 인증 실패 시 구글 지도로 대체 */
   window.navermap_authFailure=function(){window.__nmapFail=true;};
@@ -684,24 +747,53 @@
 (function(){
   /* ---------- gallery ---------- */
   var photos=[
+    {src:"p5.webp",alt:"꽃을 들고 팔짱 낀 신랑 신부"},
+    {src:"p6.webp",alt:"발코니에서 장난스러운 포즈의 신랑 신부"},
+    {src:"p7.webp",alt:"반지 낀 손으로 눈을 가린 신랑 신부"},
     {src:"p1.webp",alt:"창가에 선 신랑의 독사진"},
     {src:"p2.webp",alt:"장미 부케를 안고 미소 짓는 신부"},
     {src:"p3.webp",alt:"푸른 꽃에 둘러싸인 신랑의 독사진"},
-    {src:"p4.webp",alt:"아치 창가에서 부케를 든 신부"},
-    {src:"p5.webp",alt:"꽃을 들고 팔짱 낀 신랑 신부"},
-    {src:"p6.webp",alt:"발코니에서 장난스러운 포즈의 신랑 신부"},
-    {src:"p7.webp",alt:"반지 낀 손으로 눈을 가린 신랑 신부"}
+    {src:"p4.webp",alt:"아치 창가에서 부케를 든 신부"}
   ];
-  var grid=document.getElementById('grid');
+  var galImg=document.getElementById('gal-main-img'),
+      galThumbs=document.getElementById('gal-thumbs'),
+      galMain=document.getElementById('gal-main'),
+      galIdx=0,galBtns=[];
   photos.forEach(function(p,i){
     var b=document.createElement('button');
-    b.setAttribute('aria-label','사진 '+(i+1)+' 크게 보기');
+    b.setAttribute('aria-label','사진 '+(i+1)+' 보기');
     var im=document.createElement('img');
-    im.src=p.src; im.alt=p.alt; im.loading='lazy';
+    im.src=p.src; im.alt=''; im.loading='lazy';
     b.appendChild(im);
-    b.addEventListener('click',function(){openLb(i);});
-    grid.appendChild(b);
+    b.addEventListener('click',function(){setGal(i);});
+    galThumbs.appendChild(b);
+    galBtns.push(b);
   });
+  function setGal(i){
+    galIdx=(i+photos.length)%photos.length;
+    galImg.src=photos[galIdx].src;
+    galImg.alt=photos[galIdx].alt;
+    galBtns.forEach(function(b,j){
+      if(j===galIdx){b.classList.add('active');}else{b.classList.remove('active');}
+    });
+    try{galBtns[galIdx].scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});}catch(e){}
+  }
+  document.getElementById('gal-prev').addEventListener('click',function(){setGal(galIdx-1);});
+  document.getElementById('gal-next').addEventListener('click',function(){setGal(galIdx+1);});
+  var gtx=null,gmoved=false;
+  galMain.addEventListener('touchstart',function(e){gtx=e.touches[0].clientX;gmoved=false;},{passive:true});
+  galMain.addEventListener('touchend',function(e){
+    if(gtx===null)return;
+    var dx=e.changedTouches[0].clientX-gtx;
+    if(dx>40){gmoved=true;setGal(galIdx-1);}
+    else if(dx<-40){gmoved=true;setGal(galIdx+1);}
+    gtx=null;
+  },{passive:true});
+  galImg.addEventListener('click',function(){
+    if(!gmoved){openLb(galIdx);}
+    gmoved=false;
+  });
+  setGal(0);
 
   /* 원본 저장 버튼: 신랑·신부 전용 (비밀 주소로 접속 시에만 표시) */
   var isCouple=false;
@@ -948,6 +1040,42 @@
   }catch(e){}
   var guestSection=document.getElementById('guest-section');
   if(guestSection&&guestSection.style.display!=='none'){loadGuest();}
+
+  /* ---------- share ---------- */
+  var PAGE_URL='https://yeonkyungkwak.github.io/wedding/';
+  var KAKAO_JS_KEY='ef92305c605ca0ffe9b4349633695223';
+  var kakaoReady=false;
+  try{
+    if(KAKAO_JS_KEY&&window.Kakao&&!Kakao.isInitialized()){
+      Kakao.init(KAKAO_JS_KEY);
+      kakaoReady=Kakao.isInitialized();
+    }
+  }catch(e){}
+  document.getElementById('btn-kakao').addEventListener('click',function(){
+    if(kakaoReady){
+      try{
+        Kakao.Share.sendDefault({
+          objectType:'feed',
+          content:{
+            title:'이승민 ♥ 곽연경 결혼합니다.',
+            description:'2026년 11월 28일 토요일 낮 12시 20분 · 더베뉴지서울 네이처홀 (1층)',
+            imageUrl:'https://yeonkyungkwak.github.io/wedding/og2.jpg',
+            link:{mobileWebUrl:PAGE_URL,webUrl:PAGE_URL}
+          },
+          buttons:[{title:'청첩장 보기',link:{mobileWebUrl:PAGE_URL,webUrl:PAGE_URL}}]
+        });
+        return;
+      }catch(e){}
+    }
+    if(navigator.share){
+      navigator.share({title:'이승민 ♥ 곽연경 결혼합니다.',text:'2026년 11월 28일 토요일 낮 12시 20분 · 더베뉴지서울 네이처홀',url:PAGE_URL}).catch(function(){});
+    }else{
+      copyText(PAGE_URL,'링크가 복사되었습니다. 카카오톡에 붙여넣어 주세요');
+    }
+  });
+  document.getElementById('btn-copylink').addEventListener('click',function(){
+    copyText(PAGE_URL,'청첩장 링크가 복사되었습니다');
+  });
 
   /* ---------- map (naver, google fallback) ---------- */
   function fallbackMap(){
