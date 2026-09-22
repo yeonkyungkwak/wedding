@@ -199,9 +199,9 @@
 
   .gal-main{
     position:relative;border-radius:2px;overflow:hidden;
-    aspect-ratio:3/4;background:var(--surface);
+    background:var(--surface);
   }
-  .gal-main img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer}
+  .gal-main img{width:100%;height:auto;display:block;cursor:pointer}
   .gal-nav{
     position:absolute;top:50%;transform:translateY(-50%);
     background:rgba(43,42,38,.3);border:0;color:#fff;
@@ -745,15 +745,27 @@
 </script>
 <script>
 (function(){
+  /* 항상 맨 위에서 시작 */
+  try{if('scrollRestoration' in history){history.scrollRestoration='manual';}}catch(e){}
+  window.scrollTo(0,0);
+  window.addEventListener('pageshow',function(){window.scrollTo(0,0);});
+
   /* ---------- gallery ---------- */
   var photos=[
-    {src:"p5.webp",alt:"꽃을 들고 팔짱 낀 신랑 신부"},
-    {src:"p6.webp",alt:"발코니에서 장난스러운 포즈의 신랑 신부"},
-    {src:"p7.webp",alt:"반지 낀 손으로 눈을 가린 신랑 신부"},
+    {src:"p12.webp",alt:"드레스 자락을 들어주는 신랑과 신부"},
+    {src:"p13.webp",alt:"아치 햇살 아래 미소 짓는 신부"},
+    {src:"p11.webp",alt:"나뭇잎 그림자 아래 선 신부"},
+    {src:"p4.webp",alt:"아치 창가에서 부케를 든 신부"},
+    {src:"p15.webp",alt:"부케 너머로 마주 보는 신랑 신부"},
     {src:"p1.webp",alt:"창가에 선 신랑의 독사진"},
     {src:"p2.webp",alt:"장미 부케를 안고 미소 짓는 신부"},
     {src:"p3.webp",alt:"푸른 꽃에 둘러싸인 신랑의 독사진"},
-    {src:"p4.webp",alt:"아치 창가에서 부케를 든 신부"}
+    {src:"p8.webp",alt:"손을 잡고 나란히 선 신랑 신부"},
+    {src:"p5.webp",alt:"꽃을 들고 팔짱 낀 신랑 신부"},
+    {src:"p14.webp",alt:"꽃 한 송이를 든 신부"},
+    {src:"p16.webp",alt:"꽃 테이블에 앉은 신부"},
+    {src:"p6b.webp",alt:"발코니에서 장난스러운 포즈의 신랑 신부"},
+    {src:"p7.webp",alt:"반지 낀 손으로 눈을 가린 신랑 신부"}
   ];
   var galImg=document.getElementById('gal-main-img'),
       galThumbs=document.getElementById('gal-thumbs'),
@@ -769,13 +781,14 @@
     galThumbs.appendChild(b);
     galBtns.push(b);
   });
-  function setGal(i){
+  function setGal(i,noScroll){
     galIdx=(i+photos.length)%photos.length;
     galImg.src=photos[galIdx].src;
     galImg.alt=photos[galIdx].alt;
     galBtns.forEach(function(b,j){
       if(j===galIdx){b.classList.add('active');}else{b.classList.remove('active');}
     });
+    if(noScroll)return;
     try{
       var b=galBtns[galIdx];
       var target=b.offsetLeft-(galThumbs.clientWidth-b.offsetWidth)/2;
@@ -797,7 +810,7 @@
     if(!gmoved){openLb(galIdx);}
     gmoved=false;
   });
-  setGal(0);
+  setGal(0,true);
 
   /* 원본 저장 버튼: 신랑·신부 전용 (비밀 주소로 접속 시에만 표시) */
   var isCouple=false;
